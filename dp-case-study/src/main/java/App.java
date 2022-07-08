@@ -84,8 +84,6 @@ public class App extends Application {
 		homeHandler.show();
 	}
 
-	public static void main(String[] args) {
-		launch(args);
-	}
+
 	
 }
