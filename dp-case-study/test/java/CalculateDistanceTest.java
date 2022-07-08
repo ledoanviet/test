@@ -1,5 +1,4 @@
 
-import org.example.AlternativeDistanceCalculator;
 import org.example.DistanceCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,12 +12,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class CalculateDistanceTest {
 
     private DistanceCalculator distanceCalculator;
-    private AlternativeDistanceCalculator altDistanceCalculator;
 
     @BeforeEach
     void setup() throws Exception {
         distanceCalculator = new DistanceCalculator();
-        altDistanceCalculator = new AlternativeDistanceCalculator();
     }
 
     @ParameterizedTest
@@ -30,7 +27,6 @@ public class CalculateDistanceTest {
         boolean result;
         try {
             distanceCalculator.calculateDistance(address, province);
-            altDistanceCalculator.calculateDistance(province + address);
             result = true;
         } catch (Exception ex) {
             result = false;

@@ -4,12 +4,12 @@ import common.exception.InvalidDeliveryInfoException;
 import controller.PlaceOrderController;
 import entity.invoice.Invoice;
 import entity.order.Order;
+import entity.shipping.CalShippingFee;
 import entity.shipping.DeliveryInfo;
 import entity.shipping.ShippingConfigs;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -17,20 +17,20 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import utils.Utils;
 import views.screen.BaseScreenHandler;
+import views.screen.DisplayNextBaseScreen;
 import views.screen.ViewsConfig;
 import views.screen.invoice.InvoiceScreenHandler;
 import views.screen.popup.PopupScreen;
 
 import java.io.IOException;
-import java.net.URL;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
-public class ShippingScreenHandler extends BaseScreenHandler {
+// SOLID : vì vi phạm nguyên lý LSP VÀ ISP vì class kế thừa từ class cha BaseScreenHandler nhưng không overide các phương thức của class cha
+public class ShippingScreenHandler extends DisplayNextBaseScreen {
 
-	private static final Logger LOGGER = Utils.getLogger(ShippingScreenHandler.class.getName());
+	private static final Logger LOGGER = Utils.getInstance().getLogger(ShippingScreenHandler.class.getName());
 
 	@FXML
 	private Label screenTitle;
@@ -54,18 +54,11 @@ public class ShippingScreenHandler extends BaseScreenHandler {
 
 	public ShippingScreenHandler(Stage stage, String screenPath, Order order) throws IOException {
 		super(stage, screenPath);
-		try {
-			setupData(order);
-			setupFunctionality();
-		} catch (IOException ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error("Error when loading resources.");
-		} catch (Exception ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error(ex.getMessage());
-		}
+		setupDataAndFunction(order);
 	}
-
+/*
+/   Common coupling vì hàm setupData sử dụng global data của lớp ShippingConfigs là PROVINCES, RUSH_SUPPORT_PROVINCES_INDEX
+ */
 	protected void setupData(Object dto) throws Exception {
 		this.order = (Order) dto;
 		this.province.getItems().addAll(ShippingConfigs.PROVINCES);
@@ -80,24 +73,30 @@ public class ShippingScreenHandler extends BaseScreenHandler {
 				firstTime.setValue(false); // Variable value changed for future references
 			}
 		});
+	}
+
+	@Override
+	protected void displayNextScreen(BaseScreenHandler baseScreenHandler) {
+		baseScreenHandler.setPreviousScreen(this);
+		baseScreenHandler.setHomeScreenHandler(homeScreenHandler);
+		baseScreenHandler.setScreenTitle("Invoice Screen");
+		baseScreenHandler.setBController(getBController());
 
 	}
+
+	// clean code : submitDeliveryInfo  nhưng không được sử dụng
 
 	@FXML
 	void submitDeliveryInfo(MouseEvent event) throws IOException, InterruptedException, SQLException {
 
 		// validate delivery info and prepare order info
 		preprocessDeliveryInfo();
-		
 		// create invoice screen
 		Invoice invoice = getBController().createInvoice(order);
 		BaseScreenHandler InvoiceScreenHandler = new InvoiceScreenHandler(this.stage, ViewsConfig.INVOICE_SCREEN_PATH, invoice);
-		InvoiceScreenHandler.setPreviousScreen(this);
-		InvoiceScreenHandler.setHomeScreenHandler(homeScreenHandler);
-		InvoiceScreenHandler.setScreenTitle("Invoice Screen");
-		InvoiceScreenHandler.setBController(getBController());
-		InvoiceScreenHandler.show();
+		showNextScreen(InvoiceScreenHandler);
 	}
+
 
 	public void preprocessDeliveryInfo() throws IOException, InterruptedException {
 		// add info to messages
@@ -111,6 +110,7 @@ public class ShippingScreenHandler extends BaseScreenHandler {
 		try {
 			// process and validate delivery info
 			deliveryInfo = getBController().processDeliveryInfo(messages);
+			deliveryInfo.setCalculatorShipFreeStrategy(new CalShippingFee());
 		} catch (InvalidDeliveryInfoException e) {
 			// TODO: implement pop up screen
 			throw new InvalidDeliveryInfoException(e.getMessage());
@@ -119,12 +119,22 @@ public class ShippingScreenHandler extends BaseScreenHandler {
 		order.setDeliveryInfo(deliveryInfo);
 	}
 
+
 	public PlaceOrderController getBController(){
 		return (PlaceOrderController) super.getBController();
 	}
 
-	public void notifyError(){
+
+/*
+/   Coincidental Cohesion vì phương thức notifyError() này không liên quan đến Module này, cần viết trong mục error riêng
+ */
+
+//SOLID : vì vi phạm Nguyên lý DIP vì phương thức notifyError() nên được implements từ 1 class Abstract Notify riêng
+// clean code : phương thức notify không được sử dụng
+	/*public void notifyError(){
 		// TODO: implement later on if we need
 	}
+*/
+
 
 }

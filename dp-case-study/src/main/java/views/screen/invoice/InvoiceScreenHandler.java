@@ -8,25 +8,29 @@ import entity.shipping.DeliveryInfo;
 import entity.order.OrderItem;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
+
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import utils.Utils;
 import views.screen.BaseScreenHandler;
+import views.screen.DisplayNextBaseScreen;
 import views.screen.ViewsConfig;
 import views.screen.payment.PaymentScreenHandler;
 import views.screen.popup.PopupScreen;
 
+import javafx.scene.input.MouseEvent;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Logger;
+// SOLID : vì vi phạm nguyên lý LSP VÀ ISP vì class kế thừa từ class cha BaseScreenHandler nhưng không overide các phương thức của class cha
+public class InvoiceScreenHandler extends DisplayNextBaseScreen {
 
-public class InvoiceScreenHandler extends BaseScreenHandler {
+	private static Logger LOGGER = Utils.getInstance().getLogger(InvoiceScreenHandler.class.getName());
 
-	private static Logger LOGGER = Utils.getLogger(InvoiceScreenHandler.class.getName());
 
 	@FXML
 	private Label pageTitle;
+
 
 	@FXML
 	private Label name;
@@ -59,16 +63,7 @@ public class InvoiceScreenHandler extends BaseScreenHandler {
 
 	public InvoiceScreenHandler(Stage stage, String screenPath, Invoice invoice) throws IOException {
 		super(stage, screenPath);
-		try {
-			setupData(invoice);
-			setupFunctionality();
-		} catch (IOException ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error("Error when loading resources.");
-		} catch (Exception ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error(ex.getMessage());
-		}
+		setupDataAndFunction(invoice);
 	}
 
 	protected void setupData(Object dto) throws Exception {
@@ -102,14 +97,19 @@ public class InvoiceScreenHandler extends BaseScreenHandler {
 		return;
 	}
 
+
 	@FXML
 	void confirmInvoice(MouseEvent event) throws IOException {
 		BaseScreenHandler paymentScreen = new PaymentScreenHandler(this.stage, ViewsConfig.PAYMENT_SCREEN_PATH, invoice);
-		paymentScreen.setBController(new PaymentController());
-		paymentScreen.setPreviousScreen(this);
-		paymentScreen.setHomeScreenHandler(homeScreenHandler);
-		paymentScreen.setScreenTitle("Payment Screen");
-		paymentScreen.show();
+		showNextScreen(paymentScreen);
 		LOGGER.info("Confirmed invoice");
+	}
+
+	@Override
+	protected void displayNextScreen(BaseScreenHandler baseScreenHandler) {
+		baseScreenHandler.setPreviousScreen(this);
+		baseScreenHandler.setHomeScreenHandler(homeScreenHandler);
+		baseScreenHandler.setScreenTitle("Payment Screen");
+		baseScreenHandler.setBController(new PaymentController());
 	}
 }

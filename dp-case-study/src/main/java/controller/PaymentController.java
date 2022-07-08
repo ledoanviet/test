@@ -1,31 +1,29 @@
 package controller;
 
-import java.util.Calendar;
-import java.util.Hashtable;
-import java.util.Map;
-
 import common.exception.InvalidCardException;
 import common.exception.PaymentException;
 import common.exception.UnrecognizedException;
-import entity.cart.Cart;
 import entity.payment.CreditCard;
 import entity.payment.PaymentTransaction;
 import subsystem.InterbankInterface;
 import subsystem.InterbankSubsystem;
 
+import java.util.Calendar;
+import java.util.Hashtable;
+import java.util.Map;
+
 
 /**
  * This {@code PaymentController} class control the flow of the payment process
  * in our AIMS Software.
- *
+ * 
  * @author hieud
- * co-incidental cohension : getExpirationDate không liên quan đến class này
+ *
  */
 
 /**
- * Vi phạm nguyên lý SRP
- * Lớp này thực hiện quá nhiều method trong cùng 1 class: getExpirationDate(), isValidMonthandYear(), payOrder(), emptyCart()
- * Làm không rõ mục đích chính của class, nên tách method isValidMonthandYear() ra thành class mới vì nhiều class khác cũng cần sử dụng hoặc là thêm một phương thức validateTimeOrder ở trong class Validate
+ * SOLID:  vi pham nguyen ly OCP: tuong lai co the them nhieu phuong thuc thanh toan thi code bi sua doi
+ * SOLID:  vi pham DIP: vi phu thuoc vao CreditCard, nen phu thuoc AbstractPaymentMethod
  */
 public class PaymentController extends BaseController {
 
@@ -43,7 +41,7 @@ public class PaymentController extends BaseController {
 	 * Validate the input date which should be in the format "mm/yy", and then
 	 * return a {@link String String} representing the date in the
 	 * required format "mmyy" .
-	 *
+	 * 
 	 * @param date - the {@link String String} represents the input date
 	 * @return {@link String String} - date representation of the required
 	 *         format
@@ -77,7 +75,7 @@ public class PaymentController extends BaseController {
 
 	/**
 	 * Pay order, and then return the result with a message.
-	 *
+	 * 
 	 * @param amount         - the amount to pay
 	 * @param contents       - the transaction contents
 	 * @param cardNumber     - the card number
@@ -87,6 +85,7 @@ public class PaymentController extends BaseController {
 	 * @return {@link Map Map} represent the payment result with a
 	 *         message.
 	 */
+	//SOLID: Vi pham nguyen ly OCP vi khi them phuong thuc thanh toan moi se phai chinh sua code nay
 	public Map<String, String> payOrder(int amount, String contents, String cardNumber, String cardHolderName,
 			String expirationDate, String securityCode) {
 		Map<String, String> result = new Hashtable<String, String>();
@@ -110,6 +109,6 @@ public class PaymentController extends BaseController {
 	}
 
 	public void emptyCart(){
-        SessionInformation.cartInstance.emptyCart();
+		SessionInformation.getInstance().getCartInstance().emptyCart();
     }
 }

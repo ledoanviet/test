@@ -26,7 +26,7 @@ public class Order {
 
     public Order(Cart cart) {
         List<OrderItem> orderItems = new ArrayList<>();
-        for (Object object : SessionInformation.cartInstance.getListMedia()) {
+        for (Object object : SessionInformation.getInstance().getCartInstance().getListMedia()) {
             CartItem cartItem = (CartItem) object;
             OrderItem orderItem = new OrderItem(cartItem.getMedia(),
                     cartItem.getQuantity(),
@@ -51,21 +51,24 @@ public class Order {
         return deliveryInfo;
     }
 
+// Cohension :  ommunication Cohesion vi 2 dong lenh chi lien ket voi nhau boi du lieu dung chung
     public void setDeliveryInfo(DeliveryInfo deliveryInfo) {
         this.deliveryInfo = deliveryInfo;
         this.shippingFees = deliveryInfo.calculateShippingFee(this);
+
     }
 
+// clean code : phương thức get không được sử dụng
+/*
     public List getOrderMediaList() {
         return orderMediaList;
     }
+    public int getTax() {
+        return tax;
+    }*/
 
     public int getSubtotal() {
         return subtotal;
-    }
-
-    public int getTax() {
-        return tax;
     }
 
     public int getTotal() {

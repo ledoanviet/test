@@ -1,13 +1,6 @@
 package views.screen.intro;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
-import java.util.logging.Logger;
-
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
@@ -15,9 +8,14 @@ import utils.Utils;
 import views.screen.BaseScreenHandler;
 import views.screen.popup.PopupScreen;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.logging.Logger;
+
+// SOLID : vì vi phạm nguyên lý LSP VÀ ISP vì class  kế thừa từ class cha BaseScreenHandler nhưng không overide các phương thức của class cha
 public class IntroScreenHandler extends BaseScreenHandler {
 
-    private static final Logger LOGGER = Utils.getLogger(IntroScreenHandler.class.getName());
+    private static final Logger LOGGER = Utils.getInstance().getLogger(IntroScreenHandler.class.getName());
 
 
     @FXML
@@ -25,21 +23,13 @@ public class IntroScreenHandler extends BaseScreenHandler {
 
     public IntroScreenHandler(Stage stage, String screenPath) throws IOException {
         super(stage, screenPath);
-
-        try {
-            setupData(null);
-            setupFunctionality();
-        } catch (IOException ex) {
-            LOGGER.info(ex.getMessage());
-            PopupScreen.error("Error when loading resources.");
-        } catch (Exception ex) {
-            LOGGER.info(ex.getMessage());
-            PopupScreen.error(ex.getMessage());
-        }
+        setupDataAndFunction(null);
     }
 
-
-    protected void setupData(Object dto) throws Exception {
+    // stamp coupling vì ham setupData truyen vao dto nhung khong su dung
+    // clean code : tham số dto không được sử dụng
+//    protected void setupData(Object dto) throws Exception {
+    protected void setupData() throws Exception {
         return;
     }
 

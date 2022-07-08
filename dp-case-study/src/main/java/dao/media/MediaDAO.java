@@ -11,12 +11,13 @@ import java.util.List;
 
 /**
  * @author
- * SOLID: LSP: 3 lớp con extends lại chưa dùng được hết mọi hành vi của lớp cha, 3 phương thức getAll đều phải viết lại nếu muốn getall book hoặc cd hoặc dvd
  */
 public class MediaDAO {
 
     public List getAllMedia() throws SQLException {
-        Statement stm = AIMSDB.getConnection().createStatement();
+
+        AIMSDB aimsdb=AIMSDB.getAimsdb();
+        Statement stm = aimsdb.getConnection().createStatement();
         ResultSet res = stm.executeQuery("select * from Media");
         ArrayList medium = new ArrayList<>();
         while (res.next()) {

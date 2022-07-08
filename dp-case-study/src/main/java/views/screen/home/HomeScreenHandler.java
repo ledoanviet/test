@@ -1,30 +1,21 @@
 package views.screen.home;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.ResourceBundle;
-import java.util.logging.Logger;
-
 import common.exception.MediaNotAvailableException;
 import common.exception.ViewCartException;
 import common.interfaces.Observable;
 import common.interfaces.Observer;
-import controller.*;
+import controller.AuthenticationController;
+import controller.HomeController;
+import controller.SessionInformation;
+import controller.ViewCartController;
 import entity.cart.Cart;
 import entity.cart.CartItem;
 import entity.media.Media;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
+
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextAlignment;
@@ -34,11 +25,22 @@ import views.screen.BaseScreenHandler;
 import views.screen.ViewsConfig;
 import views.screen.cart.CartScreenHandler;
 import views.screen.popup.PopupScreen;
+import javafx.scene.input.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Logger;
 
 
+
+// Clean code :
+// SOLID : vì vi phạm nguyên lý LSP VÀ ISP vì class kế thừa từ class cha BaseScreenHandler nhưng không overide các phương thức của class cha
 public class HomeScreenHandler extends BaseScreenHandler implements Observer {
 
-    public static Logger LOGGER = Utils.getLogger(HomeScreenHandler.class.getName());
+    public static Logger LOGGER = Utils.getInstance().getLogger(HomeScreenHandler.class.getName());
 
     @FXML
     private Label numMediaInCart;
@@ -49,7 +51,7 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
     @FXML
     private ImageView cartImage;
 
-    @FXML
+  @FXML
     private VBox vboxMedia1;
 
     @FXML
@@ -72,27 +74,21 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
 
     public HomeScreenHandler(Stage stage, String screenPath) throws IOException{
         super(stage, screenPath);
-        try {
-            setupData(null);
-            setupFunctionality();
-        } catch (IOException ex) {
-            LOGGER.info(ex.getMessage());
-            PopupScreen.error("Error when loading resources.");
-        } catch (Exception ex) {
-            LOGGER.info(ex.getMessage());
-            PopupScreen.error(ex.getMessage());
-        }
+        setupDataAndFunction(null);
     }
-
-    public Label getNumMediaCartLabel(){
+// clean code : phương thức getNumMediaCartLabel không được sử dụng
+/*    public Label getNumMediaCartLabel(){
         return this.numMediaInCart;
-    }
+    }*/
 
     public HomeController getBController() {
         return (HomeController) super.getBController();
     }
 
-    protected void setupData(Object dto) throws Exception {
+    // stamp coupling vì ham setupData truyen vao dto nhung khong su dung
+
+     protected void setupData(Object dto) throws Exception {
+
         setBController(new HomeController());
         this.authenticationController = new AuthenticationController();
         try{
@@ -105,13 +101,12 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
                 this.homeItems.add(m);
             }
         } catch (SQLException | IOException e){
-            LOGGER.info("Errors occurred: " + e.getMessage());
+            LOGGER.info("Errors occured: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     protected void setupFunctionality() throws Exception {
-
         aimsImage.setOnMouseClicked(e -> {
             addMediaHome(this.homeItems);
         });
@@ -134,6 +129,9 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
         addMenuItem(2, "CD", splitMenuBtnSearch);
     }
 
+/*
+/  common coupling vì phương thức show() sử dụng biến global của lớp    SessionInformation là cartInstance
+ */
     @Override
     public void show() {
         if (authenticationController.isAnonymousSession()) {
@@ -144,7 +142,7 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
             btnLogin.setOnMouseClicked(event -> {});
         }
 
-        numMediaInCart.setText(String.valueOf(SessionInformation.cartInstance.getListMedia().size()) + " media");
+        numMediaInCart.setText(String.valueOf(SessionInformation.getInstance().getCartInstance().getListMedia().size()) + " media");
         super.show();
     }
 
@@ -153,7 +151,6 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
         File file1 = new File(ViewsConfig.IMAGE_PATH + "/" + "Logo.png");
         Image img1 = new Image(file1.toURI().toString());
         aimsImage.setImage(img1);
-
         File file2 = new File(ViewsConfig.IMAGE_PATH + "/" + "cart.png");
         Image img2 = new Image(file2.toURI().toString());
         cartImage.setImage(img2);
@@ -167,7 +164,7 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
         });
         while(!mediaItems.isEmpty()){
             hboxMedia.getChildren().forEach(node -> {
-                int vid = hboxMedia.getChildren().indexOf(node);
+               int vid = hboxMedia.getChildren().indexOf(node);
                 VBox vBox = (VBox) node;
                 while(vBox.getChildren().size()<3 && !mediaItems.isEmpty()){
                     MediaHandler media = (MediaHandler) mediaItems.get(0);
@@ -182,7 +179,10 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
     private void addMenuItem(int position, String text, MenuButton menuButton){
         MenuItem menuItem = new MenuItem();
         Label label = new Label();
-        label.prefWidthProperty().bind(menuButton.widthProperty().subtract(31));
+        // Clean code : vì sử số trực tiếp trong code gây khó đọc hiểu, sau này khi muốn thay đổi sẽ phải tìm kiếm trên toàn bộ source code để thay đổi
+        // nên cần thay bằng 1 biến hằng số (static final )  SUBTRACT_VALUE
+//        label.prefWidthProperty().bind(menuButton.widthProperty().subtract(31));
+        label.prefWidthProperty().bind(menuButton.widthProperty().subtract(ViewsConfig.SUBTRACT_VALUE));
         label.setText(text);
         label.setTextAlignment(TextAlignment.RIGHT);
         menuItem.setGraphic(label);
@@ -208,24 +208,27 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
         menuButton.getItems().add(position, menuItem);
     }
 
+    // áp dụng Observer design pattern : ỏ đây màn hình home là Observer còn các item nhỏ sẽ là các Subject.
     @Override
     public void update(Observable observable) {
         if (observable instanceof MediaHandler) update((MediaHandler) observable);
     }
-
+/*
+/  common coupling vì phương thức update() sử dụng biến global của lớp SessionInformation là cartInstance
+ */
     private void update(MediaHandler mediaHandler) {
         int requestQuantity = mediaHandler.getRequestQuantity();
         Media media = mediaHandler.getMedia();
 
         try {
             if (requestQuantity > media.getQuantity()) throw new MediaNotAvailableException();
-            Cart cart = SessionInformation.cartInstance;
+            Cart cart = SessionInformation.getInstance().getCartInstance();
             // if media already in cart then we will increase the quantity by 1 instead of create the new cartMedia
             CartItem mediaInCart = getBController().checkMediaInCart(media);
             if (mediaInCart != null) {
                 mediaInCart.setQuantity(mediaInCart.getQuantity() + 1);
             } else {
-                CartItem cartItem = new CartItem(media, cart, requestQuantity, media.getPrice());
+                CartItem cartItem = new CartItem(media, requestQuantity, media.getPrice());
                 cart.addCartMedia(cartItem);
                 LOGGER.info("Added " + cartItem.getQuantity() + " " + media.getTitle() + " to cart");
             }
@@ -249,8 +252,10 @@ public class HomeScreenHandler extends BaseScreenHandler implements Observer {
         }
     }
 
+// Stamp coupling vì event  truyền vào nhưng không được sử dụng
     @FXML
-    void redirectLoginScreen(MouseEvent event) {
+   void redirectLoginScreen(MouseEvent event) {
+
         try {
             BaseScreenHandler loginScreen = new LoginScreenHandler(this.stage, ViewsConfig.LOGIN_SCREEN_PATH);
             loginScreen.setHomeScreenHandler(this);

@@ -10,6 +10,7 @@ import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import utils.Utils;
 import views.screen.BaseScreenHandler;
+import views.screen.DisplayNextBaseScreen;
 import views.screen.ViewsConfig;
 import views.screen.popup.PopupScreen;
 
@@ -17,9 +18,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class PaymentScreenHandler extends BaseScreenHandler {
+public class PaymentScreenHandler extends DisplayNextBaseScreen {
 
-	private static final Logger LOGGER = Utils.getLogger(PaymentScreenHandler.class.getName());
+	private static final Logger LOGGER = Utils.getInstance().getLogger(PaymentScreenHandler.class.getName());
 
 	@FXML
 	private Button btnConfirmPayment;
@@ -46,16 +47,7 @@ public class PaymentScreenHandler extends BaseScreenHandler {
 
 	public PaymentScreenHandler(Stage stage, String screenPath, Invoice invoice) throws IOException {
 		super(stage, screenPath);
-		try {
-			setupData(invoice);
-			setupFunctionality();
-		} catch (IOException ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error("Error when loading resources.");
-		} catch (Exception ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error(ex.getMessage());
-		}
+		setupDataAndFunction(invoice);
 	}
 
 	protected void setupData(Object dto) throws Exception {
@@ -80,9 +72,13 @@ public class PaymentScreenHandler extends BaseScreenHandler {
 				expirationDate.getText(), securityCode.getText());
 
 		BaseScreenHandler resultScreen = new ResultScreenHandler(this.stage, ViewsConfig.RESULT_SCREEN_PATH, response);
-		resultScreen.setPreviousScreen(this);
-		resultScreen.setHomeScreenHandler(homeScreenHandler);
-		resultScreen.setScreenTitle("Result Screen");
-		resultScreen.show();
+		showNextScreen(resultScreen);
+	}
+
+	@Override
+	protected void displayNextScreen(BaseScreenHandler baseScreenHandler) {
+		baseScreenHandler.setPreviousScreen(this);
+		baseScreenHandler.setHomeScreenHandler(homeScreenHandler);
+		baseScreenHandler.setScreenTitle("Result Screen");
 	}
 }

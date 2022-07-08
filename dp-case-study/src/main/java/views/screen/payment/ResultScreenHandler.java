@@ -1,13 +1,6 @@
 package views.screen.payment;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.logging.Logger;
-
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
@@ -16,27 +9,21 @@ import utils.Utils;
 import views.screen.BaseScreenHandler;
 import views.screen.popup.PopupScreen;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.logging.Logger;
+
 public class ResultScreenHandler extends BaseScreenHandler {
 
-	private static final Logger LOGGER = Utils.getLogger(PaymentScreenHandler.class.getName());
+	private static final Logger LOGGER = Utils.getInstance().getLogger(PaymentScreenHandler.class.getName());
 
 	private String result;
 	private String message;
 
 	public ResultScreenHandler(Stage stage, String screenPath, Map<String, String> response) throws IOException {
 		super(stage, screenPath);
-		try {
-			setupData(response);
-			setupFunctionality();
-		} catch (IOException ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error("Error when loading resources.");
-		} catch (Exception ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error(ex.getMessage());
-		}
+		setupDataAndFunction(response);
 	}
-
 
 	protected void setupData(Object dto) throws Exception {
 		Map<String, String> response = (Map<String, String>) dto;

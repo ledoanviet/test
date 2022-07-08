@@ -9,6 +9,9 @@ import java.util.logging.Logger;
 
 import common.exception.MediaNotAvailableException;
 import common.exception.PlaceOrderException;
+import common.exception.ViewCartException;
+import common.interfaces.Observable;
+import common.interfaces.Observer;
 import controller.PlaceOrderController;
 import controller.ViewCartController;
 import entity.cart.CartItem;
@@ -22,13 +25,14 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import utils.Utils;
 import views.screen.BaseScreenHandler;
+import views.screen.DisplayNextBaseScreen;
 import views.screen.ViewsConfig;
 import views.screen.popup.PopupScreen;
 import views.screen.shipping.ShippingScreenHandler;
 
-public class CartScreenHandler extends BaseScreenHandler {
-	private static Logger LOGGER = Utils.getLogger(CartScreenHandler.class.getName());
-
+public class CartScreenHandler extends DisplayNextBaseScreen implements Observer {
+	private static Logger LOGGER = Utils.getInstance().getLogger(CartScreenHandler.class.getName());
+	PlaceOrderController placeOrderController;
 	@FXML
 	private ImageView aimsImage;
 
@@ -55,17 +59,15 @@ public class CartScreenHandler extends BaseScreenHandler {
 
 	public CartScreenHandler(Stage stage, String screenPath) throws IOException {
 		super(stage, screenPath);
-		try {
-			setupFunctionality();
-		} catch (IOException ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error("Error when loading resources.");
-		} catch (Exception ex) {
-			LOGGER.info(ex.getMessage());
-			PopupScreen.error(ex.getMessage());
-		}
+		setupDataAndFunction(null);
+
+	}
+	@Override
+	protected void setupData(Object dto) throws Exception {
+
 	}
 
+	@Override
 	protected void setupFunctionality() throws Exception {
 		// fix relative image path caused by fxml
 		File file = new File(ViewsConfig.IMAGE_PATH + "/Logo.png");
@@ -102,11 +104,20 @@ public class CartScreenHandler extends BaseScreenHandler {
 		displayCartWithMediaAvailability();
 		show();
 	}
+	@Override
+	protected void displayNextScreen(BaseScreenHandler baseScreenHandler) {
+         baseScreenHandler.setPreviousScreen(this);
+         baseScreenHandler.setHomeScreenHandler(homeScreenHandler);
+         baseScreenHandler.setBController(placeOrderController);
+         baseScreenHandler.setScreenTitle("Shipping Screen");
+	}
+
 
 	public void requestToPlaceOrder() throws SQLException, IOException {
 		try {
 			// create placeOrderController and process the order
-			PlaceOrderController placeOrderController = new PlaceOrderController();
+
+			placeOrderController=PlaceOrderController.getInstance();
 			if (placeOrderController.getListCartMedia().size() == 0){
 				PopupScreen.error("You don't have anything to place");
 				return;
@@ -123,11 +134,7 @@ public class CartScreenHandler extends BaseScreenHandler {
 			// display shipping form
 			ShippingScreenHandler shippingScreenHandler = new ShippingScreenHandler(
 					this.stage, ViewsConfig.SHIPPING_SCREEN_PATH, order);
-			shippingScreenHandler.setPreviousScreen(this);
-			shippingScreenHandler.setHomeScreenHandler(homeScreenHandler);
-			shippingScreenHandler.setScreenTitle("Shipping Screen");
-			shippingScreenHandler.setBController(placeOrderController);
-			shippingScreenHandler.show();
+			showNextScreen(shippingScreenHandler);
 
 		} catch (MediaNotAvailableException e) {
 			// if some media are not available then display cart and break usecase Place Order
@@ -165,9 +172,9 @@ public class CartScreenHandler extends BaseScreenHandler {
 
 				// display the attribute of vboxCart media
 				CartItem cartItem = (CartItem) cm;
-				MediaHandler mediaCartScreen = new MediaHandler(ViewsConfig.CART_MEDIA_PATH, this);
+				MediaHandler mediaCartScreen = new MediaHandler(ViewsConfig.CART_MEDIA_PATH);
 				mediaCartScreen.setCartItem(cartItem);
-
+				mediaCartScreen.attach(this);
 				// add spinner
 				vboxCart.getChildren().add(mediaCartScreen.getContent());
 			}
@@ -175,6 +182,21 @@ public class CartScreenHandler extends BaseScreenHandler {
 			updateCartAmount();
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void update(Observable observable) {
+		if (observable instanceof MediaHandler) update((MediaHandler) observable);
+	}
+
+	private void update(MediaHandler mediaHandler) {
+		try {
+			this.updateCart();
+			this.updateCartAmount();
+		} catch (SQLException exp) {
+			exp.printStackTrace();
+			throw new ViewCartException();
 		}
 	}
 }
